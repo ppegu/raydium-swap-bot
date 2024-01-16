@@ -6,6 +6,7 @@
     "start": "bun src/index.ts"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.1.5",
     "@types/bun": "latest"
   },
   "peerDependencies": {

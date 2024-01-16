@@ -1,7 +1,7 @@
 import { clusterApiUrl, Connection, Keypair } from "@solana/web3.js";
 import base58 from "bs58";
 import { config } from "dotenv";
-import { SwapRaydiumLp } from "../raydium-swap";
+import { SwapRaydiumLp } from "../swap";
 
 config();
 
