@@ -3,7 +3,7 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "start": "babel-node src/index.js"
+    "start": "bun src/index.js"
   },
   "devDependencies": {
     "@types/bun": "latest"
