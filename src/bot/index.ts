@@ -1,7 +1,8 @@
+// SwapBot.js
 import { clusterApiUrl, Connection, Keypair } from "@solana/web3.js";
 import base58 from "bs58";
 import { config } from "dotenv";
-import { SwapRaydiumLp } from "../swap";
+import { SwapRaydiumLp } from "../swap"; // Adjust the path as necessary
 
 config();
 
@@ -13,8 +14,6 @@ if (!payer)
   throw new Error("WALLET_SECRET_KEY error please check before using.");
 
 export class SwapBot {
-  scriptExecuted = 0;
-
   totalOrdersPlaced = 0;
 
   BUY_ORDER_AMOUNT: string | undefined;
@@ -22,7 +21,6 @@ export class SwapBot {
   SELL_ORDER_AMOUNT: string | undefined;
   SELL_ORDER_NO: string | undefined;
   ORDER_INTERVAL: string | undefined;
-  REPEAR_STEP: string | undefined;
   connection: Connection = new Connection(clusterApiUrl("mainnet-beta"));
   payer: Keypair = payer;
 
@@ -32,13 +30,12 @@ export class SwapBot {
     this.SELL_ORDER_AMOUNT = process.env.SELL_ORDER_AMOUNT;
     this.SELL_ORDER_NO = process.env.SELL_ORDER_NO;
     this.ORDER_INTERVAL = process.env.ORDER_INTERVAL;
-    this.REPEAR_STEP = process.env.REPEAR_STEP;
   }
 
   async sleep(time: number) {
     console.log("sleeping:", time, "ms");
-    return new Promise((rs) => {
-      setTimeout(rs, time); // ms
+    return new Promise((resolve) => {
+      setTimeout(resolve, time); // ms
     });
   }
 
@@ -69,7 +66,7 @@ export class SwapBot {
 
     const resp = await SwapRaydiumLp(
       this.connection,
-      payer,
+      this.payer,
       Number(this.BUY_ORDER_AMOUNT), // in SOL
       "in"
     );
@@ -79,34 +76,42 @@ export class SwapBot {
 
   async createSellOrder() {
     console.log("Creating sell order for", this.totalOrdersPlaced);
+
     const resp = await SwapRaydiumLp(
       this.connection,
-      payer,
-      Number(this.SELL_ORDER_AMOUNT) / Number(this.SELL_ORDER_NO), //in SOL
+      this.payer,
+      Number(this.SELL_ORDER_AMOUNT), // in SOL
       "out"
     );
+
     console.log("sell order created:", resp);
   }
 
   async startProcess() {
-    if (this.scriptExecuted >= Number(this.REPEAR_STEP)) {
-      console.log("script executed:", this.scriptExecuted, "times");
-      return;
+    while (true) {
+      try {
+        const orders = this.getShuffledOrders();
+
+        for (const direction of orders) {
+          this.totalOrdersPlaced += 1;
+          if (direction === "buy") {
+            await this.createBuyorder();
+          } else if (direction === "sell") {
+            await this.createSellOrder();
+          }
+          await this.sleep(Number(this.ORDER_INTERVAL));
+        }
+      } catch (e) {
+        console.log("Error occurred:", e);
+        console.log("=========================================================================");
+        console.log("=                  -->>>>>>CHECK WALLET BALANCES<<<<<---                =");
+        console.log("=========================================================================");
+
+        // Optional: Add some delay before restarting to avoid rapid failure loops
+        await this.sleep(1000);
+      }
     }
-
-    const orders = this.getShuffledOrders();
-
-    /**for each order now call order function */
-
-    for (const direction of orders) {
-      this.totalOrdersPlaced += 1;
-      if (direction === "buy") await this.createBuyorder();
-      else if (direction === "sell") await this.createSellOrder();
-      await this.sleep(Number(this.ORDER_INTERVAL));
-    }
-
-    this.scriptExecuted += 1;
-
-    await this.startProcess();
   }
 }
+
+export default SwapBot;
