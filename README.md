@@ -14,4 +14,4 @@ bun run src/index.ts
 
 
 
-Contact me: https://t.me/@ppegu997
+Contact me: https://t.me/ppegu997
